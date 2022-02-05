@@ -1,0 +1,142 @@
+version: '3.8'
+
+services:
+  vaultwarden:
+    image: vaultwarden/server:1.24.0
+    hostname: vaultwarden
+    container_name: vaultwarden__vaultwarden
+
+    restart: unless-stopped
+
+    environment:
+      SIGNUPS_ALLOWED: 'false'
+      ADMIN_TOKEN: ${ADMIN_TOKEN}
+
+    expose:
+      - 80
+
+    networks:
+      vaultwarden_cloudflared:
+      vaultwarden_internet:
+
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+
+    logging:
+      driver: json-file
+      options:
+        max-file: '1'
+        max-size: 1m
+
+    volumes:
+      - type: volume
+        source: vaultwarden_data
+        target: /data/
+
+  cloudflared:
+    image: cloudflare/cloudflared:2022.1.3
+    hostname: cloudflared
+    container_name: valutwarden__cloudflared
+
+    environment:
+      TUNNEL_METRICS: 0.0.0.0:9126
+      TUNNEL_URL: http://vaultwarden:80
+      TUNNEL_HOSTNAME: vw.yr32.net
+      TUNNEL_LOGFILE: /dev/stdout
+
+    command: 'tunnel'
+    user: root
+
+    depends_on:
+      - vaultwarden
+
+    restart: unless-stopped
+
+    volumes:
+      - type: bind
+        source: /etc/cloudflared/cert.pem
+        target: /etc/cloudflared/cert.pem
+        read_only: true
+
+    networks:
+      vaultwarden_cloudflared:
+      cloudflared_internet:
+      prometheus__cloudflared:
+        aliases:
+          - vaultwarden__cloudflared
+
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+
+    logging:
+      driver: json-file
+      options:
+        max-file: '1'
+        max-size: 1m
+
+  cloudflared4compatibility:
+    image: cloudflare/cloudflared:2022.1.3
+    hostname: cloudflared4compatibility
+    container_name: valutwarden__cloudflared4compatibility
+
+    environment:
+      TUNNEL_METRICS: 0.0.0.0:9126
+      TUNNEL_URL: http://vaultwarden:80
+      TUNNEL_HOSTNAME: bwrs.yr32.net
+      TUNNEL_LOGFILE: /dev/stdout
+
+    command: 'tunnel'
+    user: root
+
+    depends_on:
+      - vaultwarden
+
+    restart: unless-stopped
+
+    volumes:
+      - type: bind
+        source: /etc/cloudflared/cert.pem
+        target: /etc/cloudflared/cert.pem
+        read_only: true
+
+    networks:
+      vaultwarden_cloudflared:
+      cloudflared_internet:
+      prometheus__cloudflared:
+        aliases:
+          - vaultwarden__cloudflared4compatibility
+
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+
+    logging:
+      driver: json-file
+      options:
+        max-file: '1'
+        max-size: 1m
+
+volumes:
+  vaultwarden_data:
+    name: vaultwarden__vaultwarden_data
+
+networks:
+  prometheus__cloudflared:
+    name: prometheus__cloudflared
+    internal: true
+    external: true
+
+  vaultwarden_cloudflared:
+    name: vaultwarden__vaultwarden_cloudflared
+
+  vaultwarden_internet:
+    name: vaultwarden__vaultwarden_internet
+
+  cloudflared_internet:
+    name: vaultwarden__cloudflared_internet
+
