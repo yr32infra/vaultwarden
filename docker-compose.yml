@@ -36,7 +36,7 @@ services:
         target: /data/
 
   cloudflared:
-    image: cloudflare/cloudflared:2022.2.1
+    image: cloudflare/cloudflared:2022.2.2
     hostname: cloudflared
     container_name: valutwarden__cloudflared
 
@@ -79,7 +79,7 @@ services:
         max-size: 1m
 
   cloudflared4compatibility:
-    image: cloudflare/cloudflared:2022.2.1
+    image: cloudflare/cloudflared:2022.2.2
     hostname: cloudflared4compatibility
     container_name: valutwarden__cloudflared4compatibility
 
